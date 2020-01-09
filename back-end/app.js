@@ -48,16 +48,11 @@ app.use('/graphql' , graphqlhttp({
             return CurrentEvents;
         },
         createEvent: function(args){
-            // console.log(args.eventInput.name)
             const event = new Event({
-                name: args.eventInput.name,
-                description: args.eventInput.description,
-                price: args.eventInput.price,
-                attendes: args.eventInput.attendes,
-                // _id : Math.random().toString(),
+                ...args.eventInput,
                 date: new Date(args.eventInput.date)
             })
-            event.save()
+            return event.save()
             .then((result)=>{
                 console.log(result);
                 return { ...result._doc };
@@ -66,7 +61,6 @@ app.use('/graphql' , graphqlhttp({
                 console.log(err)
                 throw err; 
             })
-            // CurrentEvents.push(data)
         }
     },
     //for in browser graohql intrface, set this false on production mode    
