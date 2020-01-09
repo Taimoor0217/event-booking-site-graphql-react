@@ -2,16 +2,19 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const graphqlhttp = require('express-graphql');
 const {buildSchema} = require('graphql')
+const mongoose = require('mongoose')
 const app = express();
+
+let CurrentEvents = [];
 app.use(bodyParser.json());
-// app.get('/' , (req , res , next)=>{
-//     res.send('Hello World')
-// })
+app.get('/' , (req , res , next)=>{
+    res.send('Hello World')
+})
 app.use('/graphql' , graphqlhttp({
     //queries
     schema: buildSchema(` 
         type Event {
-            __id: ID
+            _id: ID
             name: String!
             description: String
             date: String!
@@ -19,11 +22,19 @@ app.use('/graphql' , graphqlhttp({
             attendes: Int
         }
 
+        input EventInput {
+            name: String!
+            description: String
+            date: String!
+            price: Float!
+            attendes: Int
+        }
+        
         type RootQuery {
-            events: [String!]!
+            events: [Event!]!
         }
         type RootMutation {
-            createEvent(name: String!): String 
+            createEvent(eventInput: EventInput!): Event
         }
         schema {
             query: RootQuery
@@ -33,13 +44,24 @@ app.use('/graphql' , graphqlhttp({
     //resolvers
     rootValue: {
         events: function(){
-            return ['Marrige' , 'Coding' , 'Dancing']
+            return CurrentEvents;
         },
         createEvent: function(args){
-            console.log(args)
-            return args.name;
+            const data = {
+                ...args.eventInput,
+                _id : Math.random().toString()
+            }
+            CurrentEvents.push(data)
+            return args.eventInput
         }
     },
+    //for in browser graohql intrface, set this false on production mode
     graphiql: true
 }));
-app.listen(8000 , ()=> console.log('🚀 Server Running on Port 8000...'))
+// console.log(process.env.db_admin , process.env.db_password)
+mongoose.connect(`mongodb+srv://${process.env.db_admin}:${process.env.db_password}@cluster0-taeyx.mongodb.net/test?retryWrites=true&w=majority` , { useNewUrlParser: true ,  useUnifiedTopology: true  })
+.then(()=>{
+    app.listen(8000 , ()=> console.log('🚀 Server Running on Port 8000...'))
+}).catch(err=>{
+    console.log(err)
+})
